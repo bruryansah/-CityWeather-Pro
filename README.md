@@ -10,7 +10,6 @@ A modern, responsive weather application built with Laravel and Tailwind CSS tha
 
 - 🔍 **Real-time Weather Search** - Get current weather data for any city worldwide
 - 📊 **5-Day Forecast** - Visual temperature chart and detailed daily forecasts
-- 🤖 **AI Recommendations** - Get personalized weather-based advice
 - ⭐ **Favorite Cities** - Save and quickly access your favorite locations
 - 📱 **Fully Responsive** - Optimized for mobile, tablet, and desktop
 - 🎨 **Modern UI** - Beautiful glassmorphism design with smooth animations
@@ -46,24 +45,23 @@ A modern, responsive weather application built with Laravel and Tailwind CSS tha
 ### Backend (Laravel)
 - **Laravel Vite** - Asset bundling
 - **Weather API Integration** - Real-time weather data
-- **AI Integration** - Weather-based recommendations
 
 ## 📋 Prerequisites
 
 Before you begin, ensure you have met the following requirements:
 
-- PHP >= 8.1
+- PHP >= 8.2
 - Composer
 - Node.js & NPM
-- Laravel 10.x
+- Laravel 12.x
 - Weather API Key (e.g., OpenWeatherMap)
 
 ## 🚀 Installation
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/cityweather-pro.git
-cd cityweather-pro
+git clone https://github.com/yourusername/CityWeather-Pro.git
+cd CityWeather-Pro
 ```
 
 ### 2. Install Dependencies
@@ -88,7 +86,7 @@ php artisan key:generate
 Edit `.env` file and add your API keys:
 ```env
 WEATHER_API_KEY=your_weather_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here  # For AI recommendations
+OPENAI_API_KEY=your_openai_api_key_here  # For AI recommendations (optional)
 ```
 
 ### 5. Build Assets
@@ -137,42 +135,27 @@ Route::get('/search-weather', [WeatherController::class, 'searchWeather']);
 }
 ```
 
-#### 2. Forecast Endpoint
+#### 2. Uhhh
 ```php
-Route::get('/forecast', [WeatherController::class, 'getForecast']);
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+use App\Http\Controllers\WeatherController;
+
+Route::get('/', [WeatherController::class, 'index'])->name('home');
+Route::get('/search-weather', [WeatherController::class, 'search'])->name('search.weather');
+
+Route::get('/forecast', [WeatherController::class, 'forecast'])->name('forecast');
+
+Route::post('/ai-recommendation', [WeatherController::class, 'aiRecommendation'])->name('ai.recommendation');
+
 ```
 
-**Expected Response Format:**
-```json
-{
-  "list": [
-    {
-      "dt_txt": "2024-01-15 12:00:00",
-      "main": { "temp": 28.5 },
-      "weather": [{ "description": "clear sky" }]
-    }
-  ]
-}
-```
-
-#### 3. AI Recommendation Endpoint
-```php
-Route::post('/ai-recommendation', [WeatherController::class, 'getAIRecommendation']);
-```
-
-**Request Format:**
-```json
-{
-  "weather": "Clear"
-}
-```
-
-**Expected Response Format:**
-```json
-{
-  "recommendation": "Perfect weather for outdoor activities! Don't forget sunscreen."
-}
-```
 
 ### Controller Example
 
@@ -183,55 +166,64 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use OpenAI\Laravel\Facades\OpenAI;
+
 
 class WeatherController extends Controller
 {
-    public function searchWeather(Request $request)
+    public function index()
+    {
+        return view('weather.index');
+    }
+
+    public function search(Request $request)
+    {
+        $city = $request->query('city');
+
+        $apiKey = env('WEATHER_API_KEY');
+        $url = "https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey&units=metric";
+
+        $response = Http::get($url);
+
+        if ($response->failed()) {
+            return response()->json(['error' => 'City not found'], 404);
+        }
+
+        return $response->json();
+    }
+
+    public function forecast(Request $request)
     {
         $city = $request->query('city');
         $apiKey = env('WEATHER_API_KEY');
-        
-        $response = Http::get("https://api.openweathermap.org/data/2.5/weather", [
-            'q' => $city,
-            'appid' => $apiKey,
-            'units' => 'metric'
-        ]);
-        
+        $url = "https://api.openweathermap.org/data/2.5/forecast?q=$city&appid=$apiKey&units=metric";
+
+        $response = Http::get($url);
+
+        if ($response->failed()) {
+            return response()->json(['error' => 'City not found'], 404);
+        }
+
         return $response->json();
     }
-    
-    public function getForecast(Request $request)
+
+    public function aiRecommendation(Request $request)
     {
-        $city = $request->query('city');
-        $apiKey = env('WEATHER_API_KEY');
-        
-        $response = Http::get("https://api.openweathermap.org/data/2.5/forecast", [
-            'q' => $city,
-            'appid' => $apiKey,
-            'units' => 'metric'
+        $weather = $request->input('weather'); // contoh: "rain", "sunny", "clouds"
+
+        $prompt = "Buat rekomendasi singkat berdasarkan cuaca: $weather";
+
+        $response = OpenAI::completions()->create([
+            'model' => 'text-davinci-003',
+            'prompt' => $prompt,
+            'max_tokens' => 50,
         ]);
-        
-        return $response->json();
-    }
-    
-    public function getAIRecommendation(Request $request)
-    {
-        $weather = $request->input('weather');
-        
-        // Implement your AI logic here
-        // Example using OpenAI API or custom logic
-        
-        $recommendations = [
-            'Clear' => 'Perfect weather! Great for outdoor activities.',
-            'Clouds' => 'Cloudy but comfortable. Good for a walk.',
-            'Rain' => 'Bring an umbrella! Stay dry and cozy indoors.',
-            'Snow' => 'Bundle up! Perfect for winter activities.',
-        ];
-        
+
         return response()->json([
-            'recommendation' => $recommendations[$weather] ?? 'Check the forecast!'
+            'recommendation' => $response->choices[0]->text
         ]);
     }
+
 }
 ```
 
@@ -253,43 +245,7 @@ class WeatherController extends Controller
 - Interactive Chart.js implementation
 - Responsive design for all screen sizes
 - Auto-updates with new searches
-
-### 4. AI Recommendations
-- Get weather-appropriate suggestions
-- Powered by your AI endpoint
-- Context-aware advice based on conditions
-
-## 🎨 UI Components
-
-### Color Scheme
-- **Primary**: Blue gradient (from-blue-500 to-purple-700)
-- **Accents**: Yellow/Orange for favorites
-- **Glass Effect**: White with 20% opacity + backdrop blur
-- **Text**: White with blue-100 for secondary text
-
-### Responsive Breakpoints
-- **Mobile**: < 640px (1 column layout)
-- **Tablet**: 640px - 1024px (2 column layout)
-- **Desktop**: > 1024px (3 column layout)
-
-## 🔍 API Reference
-
-### Frontend JavaScript Functions
-
-#### `searchWeather()`
-Fetches current weather data for the entered city.
-
-#### `getForecast(city)`
-Retrieves 5-day weather forecast.
-
-#### `getAIRecommendation(weatherMain)`
-Gets AI-powered weather recommendations.
-
-#### `renderChart(forecastData)`
-Renders temperature chart using Chart.js.
-
-#### `renderFavorites()`
-Displays saved favorite cities.
+  
 
 ## 📝 Browser Compatibility
 
@@ -299,47 +255,6 @@ Displays saved favorite cities.
 - ✅ Edge (latest)
 - ✅ Mobile browsers (iOS Safari, Chrome Mobile)
 
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**1. Weather data not loading**
-- Check your API key in `.env`
-- Verify endpoint URLs are correct
-- Check browser console for errors
-
-**2. Chart not displaying**
-- Ensure Chart.js CDN is accessible
-- Check forecast data format
-- Verify canvas element exists
-
-**3. Favorites not persisting**
-- Check browser localStorage permissions
-- Clear cache and try again
-- Verify JavaScript is enabled
-
-**4. CSRF Token Error**
-- Ensure Laravel session is active
-- Check `@csrf` token in meta tags
-- Verify POST request headers
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Authors
-
-- **Your Name** - *Initial work*
 
 ## 🙏 Acknowledgments
 
@@ -348,20 +263,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Charts: [Chart.js](https://www.chartjs.org/)
 - CSS Framework: [Tailwind CSS](https://tailwindcss.com/)
 
-## 📞 Support
-
-For support, email support@cityweatherpro.com or open an issue in the repository.
-
-## 🚧 Roadmap
-
-- [ ] Multiple language support
-- [ ] Dark/Light theme toggle
-- [ ] Hourly forecast view
-- [ ] Weather alerts and notifications
-- [ ] Location-based auto-detection
-- [ ] Weather maps integration
-- [ ] Export weather data
-- [ ] Social sharing features
 
 ## 📊 Performance
 
@@ -370,6 +271,5 @@ For support, email support@cityweatherpro.com or open an issue in the repository
 - Time to Interactive: < 2.5s
 - Mobile-friendly: ✅
 
----
+## Seperti biasa, readme ini di buat dengan ai jadi tolong di cek lagi, terutama di bagian instalation
 
-**Made with ❤️ using Laravel and Tailwind CSS**
