@@ -18,7 +18,7 @@ A modern, responsive weather application built with Laravel and Tailwind CSS tha
 ## 🖼️ Screenshots
 
 ### Desktop View
-![images]
+![images](https://github.com/bruryansah/-CityWeather-Pro/blob/a32a1de2c81f180aa663d2d753c950b5740042fa/Desain%20tanpa%20judul.png)
 ```
 [Beautiful gradient background with glassmorphic cards]
 - Main search interface
@@ -28,6 +28,8 @@ A modern, responsive weather application built with Laravel and Tailwind CSS tha
 ```
 
 ### Mobile View
+![images](https://github.com/bruryansah/-CityWeather-Pro/blob/a32a1de2c81f180aa663d2d753c950b5740042fa/brave_screenshot_localhost%20(3).png)
+![images](https://github.com/bruryansah/-CityWeather-Pro/blob/a32a1de2c81f180aa663d2d753c950b5740042fa/brave_screenshot_localhost%20(4).png)
 ```
 [Responsive layout with touch-friendly buttons]
 - Optimized card grid (2 columns)
