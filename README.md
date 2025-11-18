@@ -18,6 +18,7 @@ A modern, responsive weather application built with Laravel and Tailwind CSS tha
 ## 🖼️ Screenshots
 
 ### Desktop View
+![images]
 ```
 [Beautiful gradient background with glassmorphic cards]
 - Main search interface
